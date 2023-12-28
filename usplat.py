@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-GRP_ROM = Path("roms/GRP0301-010.BIN")
-WWP_ROM = Path("roms/WWP2080-7213.BIN")
+ROOT_DIR = Path(__file__).parent
+GRP_ROM = ROOT_DIR / "roms" / "GRP0301-010.BIN"
+WWP_ROM = ROOT_DIR / "roms" / "WWP2080-7213.BIN"
 
 VERBOSE = False
 
@@ -47,7 +48,7 @@ def handle_sos(data: bytes, offset: int) -> SOS:
     debug(
         f"<SOS> {(str(hex(offset))).ljust(8)} {name.ljust(16)} flag1:{flag1:X} flag2:{flag2:X} flag3:{flag3:X}"
     )
-    return SOS(offset, length, name, data[offset : offset + length])
+    return SOS(offset, length, name, data[:length])
 
 
 def bytes_type_str(data: bytes) -> str:
@@ -90,7 +91,7 @@ def main() -> None:
                     )
                     cur_pos = next_sos
 
-        dump_dir = Path(r.with_suffix("").name)
+        dump_dir = Path("out") / Path(r.with_suffix("").name)
         dump_dir.mkdir(exist_ok=True)
 
         for sos in soss:
