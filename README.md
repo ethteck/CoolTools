@@ -2,15 +2,13 @@
 
 A collection of notes and tools related to the Sigma B88 and Cool104
 
-## usplat.py
-
-(micro splat)
+## usplat.py (micro splat)
 
 Place roms `GRP0301-010.BIN` and `WWP2080-7213.BIN` into the `roms/` top-level directory and run usplat.py to extract the roms' SOS sections into individual files in the `out/` dir.
 
 ## Other tools
 
-Ghidra plugin for H16: https://github.com/marijnvdwerf/ghidra-hd641016
+[Ghidra extension for HD641016 (H16)](https://github.com/marijnvdwerf/ghidra-hd641016)
 
 ### References
 
