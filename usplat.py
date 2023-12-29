@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+import struct
 from typing import List
 
 ROOT_DIR = Path(__file__).parent
@@ -21,6 +22,7 @@ class SOS:
     rom_offset: int
     length: int
     name: str
+    flag1: int
     data: bytes
 
 
@@ -48,7 +50,7 @@ def handle_sos(data: bytes, offset: int) -> SOS:
     debug(
         f"<SOS> {(str(hex(offset))).ljust(8)} {name.ljust(16)} flag1:{flag1:X} flag2:{flag2:X} flag3:{flag3:X}"
     )
-    return SOS(offset, length, name, data[:length])
+    return SOS(offset, length, name, flag1, data[:length])
 
 
 def bytes_type_str(data: bytes) -> str:
@@ -63,7 +65,7 @@ def main() -> None:
         debug(f"{r}:")
 
         with open(r, "rb") as f:
-            data = f.read()
+            data: bytes = f.read()
 
         cur_pos = 0
         soss: List[SOS] = []
@@ -92,7 +94,39 @@ def main() -> None:
                     cur_pos = next_sos
 
         dump_dir = Path("out") / Path(r.with_suffix("").name)
-        dump_dir.mkdir(exist_ok=True)
+        dump_dir.mkdir(exist_ok=True, parents=True)
+
+        for sos in soss:
+            a, width, height, is_compressed = struct.unpack(
+                ">HHHH", sos.data[sos.flag1 : sos.flag1 + 0x8]
+            )
+            if is_compressed != 1:
+                continue
+
+            debug(f"{sos.name} seems compressed, decompressing")
+
+            cur_pos = sos.flag1 + 0x10
+            buf = b""
+            y = 0
+
+            while y < height:
+                length = int.from_bytes(sos.data[cur_pos : cur_pos + 0x2], "big")
+                cur_pos += 2
+                end_pos = cur_pos + length
+
+                while cur_pos < end_pos:
+                    b: int = struct.unpack(">b", sos.data[cur_pos : cur_pos + 1])[0]
+                    cur_pos += 1
+                    if b < 0:
+                        buf += (sos.data[cur_pos : cur_pos + 1]) * (-b + 1)
+                        cur_pos += 1
+                    else:
+                        buf += sos.data[cur_pos : cur_pos + b + 1]
+                        cur_pos += b + 1
+                y += 1
+
+            with open(dump_dir / f"{sos.name.replace('/', '-')}.dec.bin", "wb") as f:
+                f.write(buf)
 
         for sos in soss:
             with open(dump_dir / f"{sos.name.replace('/', '-')}.bin", "wb") as f:
