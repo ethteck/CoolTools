@@ -6,10 +6,19 @@ import struct
 from typing import List
 
 ROOT_DIR = Path(__file__).parent
-GRP_ROM = ROOT_DIR / "roms" / "GRP0301-010.BIN"
-WWP_ROM = ROOT_DIR / "roms" / "WWP2080-7213.BIN"
 
-VERBOSE = False
+ROMS = {
+    "cool104": {
+        "grp": "GRP0301-010",
+        "wwp": "WWP2080-7213",
+    },
+    "wwp2047": {
+        "grp": "GRP8001-010",
+        "wwp": "WWP2047-1712",
+    },
+}
+
+VERBOSE = True
 
 
 def debug(msg: str):
@@ -61,10 +70,13 @@ def bytes_type_str(data: bytes) -> str:
 
 
 def main() -> None:
-    for r in [GRP_ROM, WWP_ROM]:
+    rom = "wwp2047"
+    print(f"Dumping {rom}...")
+
+    for r in ROMS[rom].values():
         debug(f"{r}:")
 
-        with open(r, "rb") as f:
+        with open(ROOT_DIR / "roms" / rom / (r + ".BIN"), "rb") as f:
             data: bytes = f.read()
 
         cur_pos = 0
@@ -93,7 +105,7 @@ def main() -> None:
                     )
                     cur_pos = next_sos
 
-        dump_dir = Path("out") / Path(r.with_suffix("").name)
+        dump_dir = Path("out") / rom / r
         dump_dir.mkdir(exist_ok=True, parents=True)
 
         for sos in soss:
